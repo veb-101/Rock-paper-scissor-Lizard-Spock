@@ -24,43 +24,70 @@ async function train() {
 
   model = tf.sequential({
     layers: [
-
-      f.layers.flatten({
-        inputShape: mobilenet.outputs[0].shape.slice(1)
+      tf.layers.conv2d({
+        inputShape: mobilenet.outputs[0].shape.slice(1),
+        kernelSize: 1,
+        filters: 128,
+        activation: 'relu',
+        kernel_initializer: 'he_uniform'
       }),
-      tf.layers.dense({
-        units: 100,
-        activation: 'relu'
+      tf.layers.conv2d({
+        kernelSize: 3,
+        filters: 32,
+        activation: 'relu',
+        kernel_initializer: 'he_uniform'
       }),
-      tf.layers.dense({
-        units: 30,
-        activation: 'relu'
+      tf.layers.maxPooling2d({
+        poolSize: [2, 2]
       }),
+      tf.layers.flatten(),
+      
       tf.layers.dense({
         units: 5,
-        activation: 'softmax'
+        activation: "softmax"
       })
+      // YOUR CODE HERE
     ]
   });
 
-
-  // Set the optimizer to be tf.train.adam() with a learning rate of 0.0001.
   const optimizer = tf.train.adam(0.0001);
+
+  const metrics = ['loss', 'val_loss', 'acc', 'val_acc']
+
+  // Create the container for the callback. 
+
+  const container = {
+    name: 'Model Training',
+    styles: {
+      height: '1000px'
+    }
+  };
+
+  // Use tfvis.show.fitCallbacks() to setup the callbacks. 
+  // Use the container and metrics defined above as the parameters.
+  const fitCallbacks = tfvis.show.fitCallbacks(container, metrics)
+
+
   model.compile({
     optimizer: optimizer,
-    loss: 'categoricalCrossentropy'
+    loss: 'categoricalCrossentropy',
+    metrics: ['accuracy']
   });
+  tfvis.show.modelSummary({
+    name: 'Model Architecture'
+  }, model);
 
   let loss = 0;
-  model.fit(dataset.xs, dataset.ys, {
+  await model.fit(dataset.xs, dataset.ys, {
+    batchSize: 20,
     epochs: 10,
-    callbacks: {
-      onBatchEnd: async (batch, logs) => {
-        loss = logs.loss.toFixed(5);
-        console.log('LOSS: ' + loss);
-      }
-    }
+    shuffle: true,
+    validationSplit: 0.1,
+    callbacks: fitCallbacks
   });
+
+  alert("Training Done!");
+
 }
 
 
@@ -82,12 +109,10 @@ function handleButton(elem) {
       spockSamples++;
       document.getElementById("spocksamples").innerText = "Spock samples:" + spockSamples;
       break;
-
     case "4":
       lizardSamples++;
-      document.getElementById("lizardSamples").innerText = "Lizard samples:" + spockSamples;
+      document.getElementById("lizardsamples").innerText = "Lizard samples: " + lizardSamples;
       break;
-
 
   }
   label = parseInt(elem.id);
@@ -120,7 +145,7 @@ async function predict() {
         predictionText = "I see Spock";
         break;
       case 4:
-        predictionText = "I see lizzard";
+        predictionText = "I see Lizard";
         break;
 
     }
@@ -135,7 +160,6 @@ async function predict() {
 
 function doTraining() {
   train();
-  alert("Training Done!")
 }
 
 function startPredicting() {
