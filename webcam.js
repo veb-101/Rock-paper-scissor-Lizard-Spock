@@ -88,23 +88,27 @@ class Webcam {
   async setup() {
     return new Promise((resolve, reject) => {
       navigator.getUserMedia = navigator.getUserMedia ||
-          navigator.webkitGetUserMedia || navigator.mozGetUserMedia ||
-          navigator.msGetUserMedia;
+        navigator.webkitGetUserMedia || navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
       if (navigator.getUserMedia) {
-        navigator.getUserMedia(
-            {video: {width: 224, height: 224}},
-            stream => {
-              this.webcamElement.srcObject = stream;
-              this.webcamElement.addEventListener('loadeddata', async () => {
-                this.adjustVideoSize(
-                    this.webcamElement.videoWidth,
-                    this.webcamElement.videoHeight);
-                resolve();
-              }, false);
-            },
-            error => {
-              reject(error);
-            });
+        navigator.getUserMedia({
+            video: {
+              width: 224,
+              height: 224
+            }
+          },
+          stream => {
+            this.webcamElement.srcObject = stream;
+            this.webcamElement.addEventListener('loadeddata', async () => {
+              this.adjustVideoSize(
+                this.webcamElement.videoWidth,
+                this.webcamElement.videoHeight);
+              resolve();
+            }, false);
+          },
+          error => {
+            reject(error);
+          });
       } else {
         reject();
       }
